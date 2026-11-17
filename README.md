@@ -1,264 +1,419 @@
-# 📦 Project Setup
 
----
+# IS601 Module 11 — SQLAlchemy Calculator Application
 
-# 🧩 1. Install Homebrew (Mac Only)
+**Course:** IS601 — Python for Web API Development  
+**Institution:** New Jersey Institute of Technology (NJIT)  
+**Student:** Md Navidul Islam  
+**Repository:** https://github.com/islamnavid/module11_is601  
+**Docker Hub:** https://hub.docker.com/r/navidislam/module11_is601
 
-> Skip this step if you're on Windows.
+## 1. Project Overview
 
-Homebrew is a package manager for macOS.  
-You’ll use it to easily install Git, Python, Docker, etc.
+This project extends a Python calculator application with SQLAlchemy database models, Pydantic validation, automated testing, and a CI/CD pipeline.
 
-**Install Homebrew:**
+The application uses FastAPI to provide arithmetic operations and PostgreSQL to support database persistence testing.
 
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
+The project also includes Docker containerization, GitHub Actions automation, and Trivy vulnerability scanning.
 
-**Verify Homebrew:**
+### Main Features
 
-```bash
-brew --version
-```
+- Addition, subtraction, multiplication, and division
+- FastAPI REST endpoints
+- Request and response validation using Pydantic
+- SQLAlchemy database models
+- PostgreSQL integration testing
+- Unit and integration tests using pytest
+- Test coverage reporting using pytest-cov
+- Docker containerization
+- Automated GitHub Actions CI/CD
+- Trivy Docker image security scanning
+- Automated Docker Hub image publishing
 
-If you see a version number, you're good to go.
+## 2. Technologies Used
 
----
+| Technology | Purpose |
+|---|---|
+| Python 3.11 | Programming language |
+| FastAPI | Web API framework |
+| SQLAlchemy | Object-relational mapping |
+| PostgreSQL | Relational database |
+| Pydantic | Data validation and schemas |
+| pytest | Automated testing |
+| pytest-cov | Code coverage reporting |
+| Docker | Containerization |
+| GitHub Actions | Continuous integration and deployment |
+| Trivy | Container vulnerability scanning |
+| Docker Hub | Container image registry |
 
-# 🧩 2. Install and Configure Git
+## 3. Repository Setup
 
-## Install Git
-
-- **MacOS (using Homebrew)**
-
-```bash
-brew install git
-```
-
-- **Windows**
-
-Download and install [Git for Windows](https://git-scm.com/download/win).  
-Accept the default options during installation.
-
-**Verify Git:**
-
-```bash
-git --version
-```
-
----
-
-## Configure Git Globals
-
-Set your name and email so Git tracks your commits properly:
+Clone the repository:
 
 ```bash
-git config --global user.name "Your Name"
-git config --global user.email "your_email@example.com"
+git clone https://github.com/islamnavid/module11_is601.git
+cd module11_is601
 ```
 
-Confirm the settings:
+Create a Python virtual environment:
 
 ```bash
-git config --list
+python3.11 -m venv venv
 ```
 
----
+Activate the virtual environment.
 
-## Generate SSH Keys and Connect to GitHub
-
-> Only do this once per machine.
-
-1. Generate a new SSH key:
+macOS/Linux:
 
 ```bash
-ssh-keygen -t ed25519 -C "your_email@example.com"
+source venv/bin/activate
 ```
 
-(Press Enter at all prompts.)
+Windows PowerShell:
 
-2. Start the SSH agent:
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
 
 ```bash
-eval "$(ssh-agent -s)"
+python -m pip install -r requirements.txt
 ```
 
-3. Add the SSH private key to the agent:
+## 4. Database Configuration
+
+The application uses SQLAlchemy for database configuration, session management, and ORM models.
+
+The database configuration is implemented in:
+
+```text
+app/database.py
+```
+
+The module provides:
+
+- A SQLAlchemy engine
+- A session factory
+- A declarative model base
+- A database dependency for session management
+- Helper functions for creating engines and session factories
+
+Database connections are configured through the `DATABASE_URL` environment variable.
+
+For local PostgreSQL testing, a Docker container can be started using:
 
 ```bash
-ssh-add ~/.ssh/id_ed25519
+docker run -d \
+  --name module11-test-db \
+  -e POSTGRES_USER=module11 \
+  -e POSTGRES_PASSWORD=module11password \
+  -e POSTGRES_DB=module11_test \
+  -p 5433:5432 \
+  postgres:16
 ```
 
-4. Copy your SSH public key:
-
-- **Mac/Linux:**
+Configure the database URLs on macOS/Linux:
 
 ```bash
-cat ~/.ssh/id_ed25519.pub | pbcopy
+export DATABASE_URL="postgresql://module11:module11password@localhost:5433/module11_test"
+export TEST_DATABASE_URL="postgresql://module11:module11password@localhost:5433/module11_test"
 ```
 
-- **Windows (Git Bash):**
+These credentials are intended for local development and testing only. Production credentials should be managed securely.
+
+## 5. Running the Application
+
+Start the FastAPI application:
 
 ```bash
-cat ~/.ssh/id_ed25519.pub | clip
+uvicorn main:app --reload
 ```
 
-5. Add the key to your GitHub account:
-   - Go to [GitHub SSH Settings](https://github.com/settings/keys)
-   - Click **New SSH Key**, paste the key, save.
+The application is available at:
 
-6. Test the connection:
+```text
+http://127.0.0.1:8000
+```
+
+FastAPI documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Health endpoint:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+Expected health response:
+
+```json
+{
+  "status": "healthy"
+}
+```
+
+## 6. Calculator API Endpoints
+
+The application provides four arithmetic endpoints.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/add` | Adds two numbers |
+| POST | `/subtract` | Subtracts two numbers |
+| POST | `/multiply` | Multiplies two numbers |
+| POST | `/divide` | Divides two numbers |
+| GET | `/health` | Application health check |
+| GET | `/` | Application homepage |
+
+Example addition request:
 
 ```bash
-ssh -T git@github.com
+curl -X POST http://127.0.0.1:8000/add \
+  -H "Content-Type: application/json" \
+  -d '{"a":10,"b":5}'
 ```
 
-You should see a success message.
+Expected response:
 
----
+```json
+{
+  "result": 15.0
+}
+```
 
-# 🧩 3. Clone the Repository
+The API validates incoming requests and returns structured error responses for invalid operations.
 
-Now you can safely clone the course project:
+Division by zero is handled as an error.
+
+## 7. SQLAlchemy Models and Pydantic Schemas
+
+The application includes SQLAlchemy models for calculations and users.
+
+Important files include:
+
+```text
+app/models/calculation.py
+app/models/user.py
+app/schemas/calculation.py
+```
+
+SQLAlchemy provides database model definitions and persistence support.
+
+Pydantic provides validation and serialization for calculation-related data.
+
+The application also uses an arithmetic operation factory pattern to organize calculation behavior.
+
+Database model functionality is tested independently from the calculator's existing API endpoints.
+
+## 8. Automated Testing
+
+The project uses pytest for unit and integration testing.
+
+The test suite covers:
+
+- Arithmetic operations
+- Invalid inputs and division by zero
+- FastAPI request validation
+- API error handling
+- SQLAlchemy calculation models
+- Pydantic schemas
+- PostgreSQL database persistence
+- Database session lifecycle management
+- Database engine and session factory helpers
+
+Run unit and integration tests:
 
 ```bash
-git clone <repository-url>
-cd <repository-directory>
+python -m pytest tests/unit/ tests/integration/ -q
 ```
 
----
-
-# 🛠️ 4. Install Python 3.10+
-
-## Install Python
-
-- **MacOS (Homebrew)**
+Run tests with application-code coverage:
 
 ```bash
-brew install python
+python -m pytest tests/unit/ tests/integration/ \
+  --cov=app \
+  --cov=main \
+  --cov-report=term-missing \
+  --cov-report=html \
+  -q
 ```
 
-- **Windows**
+Latest verified local results:
 
-Download and install [Python for Windows](https://www.python.org/downloads/).  
-✅ Make sure you **check the box** `Add Python to PATH` during setup.
+```text
+94 passed
+Application-code coverage: 96%
+```
 
-**Verify Python:**
+The HTML coverage report is generated in:
+
+```text
+htmlcov/index.html
+```
+
+The test suite includes real PostgreSQL integration tests to verify database persistence behavior.
+
+## 9. Docker Containerization
+
+The application uses a multi-stage Dockerfile.
+
+The build stage installs dependencies into a Python virtual environment.
+
+The runtime stage copies the installed dependencies and application code into a separate image.
+
+The runtime container:
+
+- Uses Python 3.11
+- Runs as a non-root user
+- Exposes port 8000
+- Includes an HTTP health check
+- Removes unnecessary build and packaging components
+
+Build the Docker image:
 
 ```bash
-python3 --version
-```
-or
-```bash
-python --version
+docker build -t navidislam/module11_is601:latest .
 ```
 
----
-
-## Create and Activate a Virtual Environment
-
-(Optional but recommended)
+Run the application:
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate.bat  # Windows
+docker run --rm \
+  --name module11-app \
+  -p 8001:8000 \
+  navidislam/module11_is601:latest
 ```
 
-### Install Required Packages
+Check the health endpoint:
 
 ```bash
-pip install -r requirements.txt
+curl http://localhost:8001/health
 ```
 
----
+Expected response:
 
-# 🐳 5. (Optional) Docker Setup
+```json
+{
+  "status": "healthy"
+}
+```
 
-> Skip if Docker isn't used in this module.
+Published Docker image:
 
-## Install Docker
+https://hub.docker.com/r/navidislam/module11_is601
 
-- [Install Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
-- [Install Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
+## 10. CI/CD with GitHub Actions
 
-## Build Docker Image
+The GitHub Actions workflow is defined in:
+
+```text
+.github/workflows/test.yml
+```
+
+The pipeline contains three jobs.
+
+### Test
+
+- Starts a PostgreSQL service
+- Installs Python dependencies
+- Runs unit and integration tests
+- Uploads test result artifacts
+
+### Security
+
+- Builds the Docker image
+- Runs Trivy vulnerability scanning
+- Checks HIGH and CRITICAL vulnerabilities
+- Fails the job when qualifying vulnerabilities are detected
+
+### Deploy
+
+- Runs after successful testing and security checks
+- Authenticates with Docker Hub using GitHub Actions secrets
+- Builds the Docker image
+- Pushes the `latest` tag
+- Pushes an image tag based on the Git commit SHA
+
+The deployment job runs for pushes to the main branch.
+
+Pull requests run validation without publishing a Docker image.
+
+GitHub Actions:
+
+https://github.com/islamnavid/module11_is601/actions
+
+## 11. Security Scanning
+
+Trivy is used to scan the Docker image for known vulnerabilities.
+
+The security scan focuses on HIGH and CRITICAL severity findings.
+
+The Dockerfile was improved to remove unnecessary packaging tools from the runtime image and reduce vulnerability exposure.
+
+Run a local scan:
 
 ```bash
-docker build -t <image-name> .
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:latest image \
+  --scanners vuln \
+  --severity HIGH,CRITICAL \
+  --ignore-unfixed \
+  navidislam/module11_is601:latest
 ```
 
-## Run Docker Container
+The latest verified local scan reported zero HIGH and zero CRITICAL vulnerabilities under the configured scan settings.
 
-```bash
-docker run -it --rm <image-name>
-```
+Security scan results can change as vulnerability databases are updated.
 
----
+## 12. Development and Verification Results
 
-# 🚀 6. Running the Project
+The completed project was verified through:
 
-- **Without Docker**:
+1. Unit and integration testing
+2. Application-code coverage measurement
+3. PostgreSQL database integration testing
+4. Docker image building
+5. Container health checking
+6. Trivy vulnerability scanning
+7. GitHub Actions CI/CD execution
+8. Docker Hub image publishing
 
-```bash
-python main.py
-```
+Verified local results:
 
-(or update this if the main script is different.)
+| Check | Result |
+|---|---|
+| Unit and integration tests | 94 passed |
+| Application-code coverage | 96% |
+| Database module coverage | 100% |
+| Docker image build | Successful |
+| Container health check | Successful |
+| Trivy HIGH findings | 0 |
+| Trivy CRITICAL findings | 0 |
 
-- **With Docker**:
+## 13. Scope of Module 11
 
-```bash
-docker run -it --rm <image-name>
-```
+This module focuses on database models, schemas, testing, and CI/CD automation.
 
----
+Database-backed BREAD (Browse, Read, Edit, Add, Delete) API endpoints are not implemented as part of this module because they are reserved for Module 12.
 
-# 📝 7. Submission Instructions
+## 14. Useful Links
 
-After finishing your work:
+- GitHub Repository: https://github.com/islamnavid/module11_is601
+- GitHub Actions: https://github.com/islamnavid/module11_is601/actions
+- Docker Hub: https://hub.docker.com/r/navidislam/module11_is601
+- FastAPI Documentation: https://fastapi.tiangolo.com/
+- SQLAlchemy Documentation: https://docs.sqlalchemy.org/
+- pytest Documentation: https://docs.pytest.org/
+- Trivy Documentation: https://trivy.dev/
 
-```bash
-git add .
-git commit -m "Complete Module X"
-git push origin main
-```
+## 15. Conclusion
 
-Then submit the GitHub repository link as instructed.
+This project demonstrates the integration of SQLAlchemy database models and Pydantic schemas into an existing FastAPI calculator application.
 
----
+It also demonstrates automated testing, PostgreSQL integration, Docker containerization, vulnerability scanning, and continuous integration and deployment using GitHub Actions.
 
-# 🔥 Useful Commands Cheat Sheet
-
-| Action                         | Command                                          |
-| ------------------------------- | ------------------------------------------------ |
-| Install Homebrew (Mac)          | `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` |
-| Install Git                     | `brew install git` or Git for Windows installer |
-| Configure Git Global Username  | `git config --global user.name "Your Name"`      |
-| Configure Git Global Email     | `git config --global user.email "you@example.com"` |
-| Clone Repository                | `git clone <repo-url>`                          |
-| Create Virtual Environment     | `python3 -m venv venv`                           |
-| Activate Virtual Environment   | `source venv/bin/activate` / `venv\Scripts\activate.bat` |
-| Install Python Packages        | `pip install -r requirements.txt`               |
-| Build Docker Image              | `docker build -t <image-name> .`                |
-| Run Docker Container            | `docker run -it --rm <image-name>`               |
-| Push Code to GitHub             | `git add . && git commit -m "message" && git push` |
-
----
-
-# 📋 Notes
-
-- Install **Homebrew** first on Mac.
-- Install and configure **Git** and **SSH** before cloning.
-- Use **Python 3.10+** and **virtual environments** for Python projects.
-- **Docker** is optional depending on the project.
-
----
-
-# 📎 Quick Links
-
-- [Homebrew](https://brew.sh/)
-- [Git Downloads](https://git-scm.com/downloads)
-- [Python Downloads](https://www.python.org/downloads/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [GitHub SSH Setup Guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
+The completed implementation provides a foundation for the database-backed API functionality planned for the next module.
